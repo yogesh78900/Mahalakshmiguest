@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Guest House Bookings</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0f5c63">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--bg:#f2f5f4;--surf:#fff;--ink:#14282b;--mute:#5d7275;--line:#d9e2e1;--brand:#0f5c63;--on:#fff;--acc:#e8a317;--bad:#b3261e;--ok:#2e7d4f;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1a1c;--surf:#162427;--ink:#e6efee;--mute:#93a9ab;--line:#27393c;--brand:#4fb3bb;--on:#062024;--acc:#f0b73a;--bad:#ff8a80;--ok:#7fd1a0;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e1a1c;--surf:#162427;--ink:#e6efee;--mute:#93a9ab;--line:#27393c;--brand:#4fb3bb;--on:#062024;--acc:#f0b73a;--bad:#ff8a80;--ok:#7fd1a0;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column}
+header{padding:14px 16px 8px}
+h1{font:700 22px/1.2 Georgia,"Times New Roman",serif;margin:0}
+header p{margin:2px 0 0;color:var(--mute);font-size:14px}
+main{flex:1;overflow-y:auto;padding:8px 16px 96px}
+nav{display:flex;background:var(--surf);border-top:1px solid var(--line)}
+nav button{flex:1;padding:12px 4px;border:0;background:none;color:var(--mute);font:600 13px system-ui,sans-serif;min-height:48px}
+nav button.on{color:var(--brand);box-shadow:inset 0 3px 0 var(--brand)}
+h2{font:700 16px Georgia,serif;margin:18px 0 8px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--brand);color:var(--on);border-radius:10px;padding:10px}
+.stat b{display:block;font:700 24px Georgia,serif}
+.stat span{font-size:12px;opacity:.9}
+.item{background:var(--surf);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:8px;width:100%;text-align:left;color:inherit;font:inherit;display:block}
+.row{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.sub{color:var(--mute);font-size:14px}
+.tag{font-size:12px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--line)}
+.tag.ok{color:var(--ok)}.tag.bad{color:var(--bad)}
+.empty{color:var(--mute);padding:12px 0}
+.fab.l{left:16px;right:auto;background:var(--brand);color:var(--on)}
+.fab{position:fixed;right:16px;bottom:calc(72px + env(safe-area-inset-bottom,0px));background:var(--acc);color:#1b1300;border:0;border-radius:99px;padding:14px 20px;font:700 15px system-ui,sans-serif;box-shadow:0 3px 10px rgba(0,0,0,.3)}
+input,select,textarea{width:100%;padding:11px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit;margin:4px 0 10px}
+label{font-size:13px;color:var(--mute);font-weight:600}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{border:0;border-radius:8px;padding:13px;font:700 15px system-ui,sans-serif;background:var(--brand);color:var(--on);width:100%}
+.btn.sec{background:var(--line);color:var(--ink)}.btn.del{background:none;color:var(--bad)}
+.sheet{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:flex-end;z-index:20}
+.sheet.open{display:flex}
+.sheet>div{background:var(--surf);width:100%;max-height:92%;overflow-y:auto;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px))}
+.err{color:var(--bad);font-weight:600;margin:0 0 10px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;min-width:100%}
+td,th{border:1px solid var(--line);text-align:center;font-size:12px;min-width:38px;height:40px;padding:0}
+th{background:var(--surf);color:var(--mute);font-weight:600}
+th.rm,td.rm{position:sticky;left:0;background:var(--surf);min-width:96px;text-align:left;padding:0 6px;font-weight:700;z-index:1}
+td.b{background:var(--brand);color:var(--on);font-weight:700}
+td.t,th.t{box-shadow:inset 0 0 0 2px var(--acc)}
+.cal{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.cal button{border:1px solid var(--line);background:var(--surf);color:var(--ink);border-radius:8px;padding:8px 14px;font:inherit}
+</style>
+</head>
+<body>
+<header><h1>Guest House Bookings</h1><p id="date"></p><p id="sync" style="font-size:12px"></p></header>
+<main id="main"></main>
+<button class="fab" id="fab">+ New booking</button>
+<button class="fab l" id="pasteBtn">Paste message</button>
+<nav id="nav">
+<button data-v="today">Today</button><button data-v="list">Bookings</button><button data-v="cal">Calendar</button><button data-v="rooms">Rooms</button>
+</nav>
+<div class="sheet" id="sheet"><div id="sheetBody"></div></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+/* STEP: paste your Firebase web app details here (see README) */
+let FIREBASE_CONFIG=null;try{FIREBASE_CONFIG=JSON.parse(localStorage.getItem("gh-fbcfg"))}catch(e){}
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const iso=d=>{const x=new Date(d.getTime()-d.getTimezoneOffset()*6e4);return x.toISOString().slice(0,10)};
+const today=()=>iso(new Date());
+const P=s=>new Date(s+"T12:00:00");
+const addD=(s,n)=>{const d=P(s);d.setDate(d.getDate()+n);return iso(d)};
+const nights=(a,b)=>Math.round((P(b)-P(a))/864e5);
+const fmt=s=>P(s).toLocaleDateString(undefined,{day:"numeric",month:"short"});
+const money=n=>(Number(n)||0).toLocaleString(undefined,{maximumFractionDigits:2});
+const KEY="guesthouse-v1";
+const mk=()=>{const o=[];[["Std AC",5],["Basic AC",3],["Basic Non-AC",1],["Std Non-AC",4]].forEach(([n,c])=>{for(let i=1;i<=c;i++)o.push({id:"d"+o.length,name:n+" "+i,rate:0})});return o};
+let S={rooms:mk(),bookings:[]};
+try{const x=localStorage.getItem(KEY);if(x)S=JSON.parse(x)}catch(e){}
+if(!S.bookings.length&&S.rooms.length===3&&S.rooms[0].id==="r1")S.rooms=mk();
+let DB=null,bkRef=null,cfgRef=null;
+const setSync=(t,c)=>{const e=$("#sync");if(e){e.textContent=t;e.style.color=c||"var(--mute)"}};
+function save(h){
+ try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
+ if(!DB||!h)return;
+ const fail=e=>setSync(e&&e.code==="invalid_argument"?"View-only access: your changes are not shared":"Could not save to the shared database","var(--bad)");
+ try{
+  if(h.b)bkRef.doc(h.b.id).set(h.b).catch(fail);
+  if(h.del)bkRef.doc(h.del).delete().catch(fail);
+  if(h.rooms)cfgRef.set({list:S.rooms}).catch(fail);
+  if(h.all)pushAll().catch(fail);
+ }catch(e){fail(e)}
+}
+async function pushAll(){
+ await cfgRef.set({list:S.rooms});
+ const keep=new Set(S.bookings.map(b=>b.id)),cur=await bkRef.get();
+ for(const d of cur.docs)if(!keep.has(d.id))await bkRef.doc(d.id).delete();
+ for(const b of S.bookings)await bkRef.doc(b.id).set(b);
+}
+function showSetup(){
+ open(`<h2 style="margin-top:0">Connect to your database</h2><p class="sub">One-time step. In the Firebase website, open Project settings and copy the whole <b>firebaseConfig</b> block for your web app. Paste it here.</p><p class="err" id="cf_err"></p><textarea id="cf_t" rows="8" placeholder="const firebaseConfig = { apiKey: ..., }"></textarea><button class="btn" id="cfgo">Save and continue</button>`);
+}
+function doCfg(){
+ const t=$("#cf_t").value,g=k=>{const m=t.match(new RegExp("[\"']?"+k+"[\"']?\\s*:\\s*[\"']([^\"']+)[\"']"));return m?m[1]:""};
+ const c={apiKey:g("apiKey"),authDomain:g("authDomain"),projectId:g("projectId"),appId:g("appId")};
+ if(!c.apiKey||!c.projectId){$("#cf_err").textContent="Could not find apiKey and projectId in that text. Copy the whole block.";return}
+ try{localStorage.setItem("gh-fbcfg",JSON.stringify(c))}catch(e){}
+ location.reload();
+}
+function initDB(){
+ if(!FIREBASE_CONFIG){showSetup();return}
+ try{
+  firebase.initializeApp(FIREBASE_CONFIG);
+  const fs=firebase.firestore();
+  fs.enablePersistence({synchronizeTabs:false}).catch(()=>{});
+  firebase.auth().onAuthStateChanged(u=>{if(u)startSync(fs);else showLogin()});
+ }catch(e){setSync("Setup needed: add your Firebase details to index.html","var(--bad)")}
+}
+function showLogin(){
+ open(`<h2 style="margin-top:0">Sign in</h2><p class="sub">Use the staff login you created in Firebase. You only need to do this once per phone.</p><p class="err" id="lg_err"></p><label>Email</label><input id="lg_e" type="email" autocapitalize="none"><label>Password</label><input id="lg_p" type="password"><button class="btn" id="lgo">Sign in</button>`);
+}
+function doLogin(){
+ firebase.auth().signInWithEmailAndPassword($("#lg_e").value.trim(),$("#lg_p").value).then(()=>close()).catch(()=>{$("#lg_err").textContent="Wrong email or password."});
+}
+async function startSync(c){
+ try{
+  DB=c;bkRef=c.collection("bookings");cfgRef=c.doc("config/rooms");
+  const local=S.bookings.slice();let first=true;
+  const err=()=>setSync("Sync stopped. Reload the page.","var(--bad)");
+  cfgRef.onSnapshot(async snap=>{
+   if(snap.exists){const l=snap.data().list;if(Array.isArray(l)){S.rooms=JSON.parse(JSON.stringify(l));render()}}
+   else if(first&&!snap.metadata.fromCache){
+    first=false;try{await cfgRef.set({list:S.rooms});for(const b of local)await bkRef.doc(b.id).set(b)}catch(e){setSync("Could not set up the shared database","var(--bad)")}
+   }
+   if(snap.exists)first=false;
+  },err);
+  bkRef.onSnapshot(snap=>{
+   S.bookings=snap.docs.map(d=>({...d.data()}));
+   try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
+   setSync("Shared across your devices ✓","var(--ok)");render();
+  },err);
+ }catch(e){setSync("Saved on this device only")}
+}
+let view="today",calStart=today(),filter="upcoming";
+const uid=()=>Math.random().toString(36).slice(2,9);
+const room=id=>S.rooms.find(r=>r.id===id);
+const total=b=>nights(b.in,b.out)*(+b.rate||0);
+const balance=b=>total(b)-(+b.paid||0);
+const clash=(b)=>S.bookings.find(o=>o.id!==b.id&&o.room===b.room&&b.in<o.out&&o.in<b.out);
+
+function card(b){
+ const r=room(b.room),bal=balance(b);
+ return `<button class="item" data-edit="${b.id}"><div class="row"><b>${esc(b.guest)}</b><span class="tag ${bal<=0?"ok":"bad"}">${bal<=0?"Paid":"Owes "+money(bal)}</span></div>
+ <div class="sub">${esc(r?r.name:"Removed room")} · ${fmt(b.in)} to ${fmt(b.out)} (${nights(b.in,b.out)} night${nights(b.in,b.out)==1?"":"s"}) · ${b.pax||1} guest${b.pax==1?"":"s"}</div></button>`;
+}
+function renderToday(){
+ const t=today(),B=S.bookings;
+ const arr=B.filter(b=>b.in===t),dep=B.filter(b=>b.out===t),stay=B.filter(b=>b.in<=t&&b.out>t);
+ const free=S.rooms.length-new Set(stay.map(b=>b.room)).size;
+ const sec=(h,l)=>`<h2>${h}</h2>${l.length?l.map(card).join(""):'<div class="empty">None</div>'}`;
+ return `<div class="stats"><div class="stat"><b>${arr.length}</b><span>Arriving</span></div><div class="stat"><b>${stay.length}</b><span>In house</span></div><div class="stat"><b>${free}</b><span>Rooms free</span></div></div>`+sec("Arriving today",arr)+sec("Leaving today",dep)+sec("Staying now",stay.filter(b=>b.in<t));
+}
+function renderList(){
+ const t=today();let L=[...S.bookings];
+ const f={upcoming:b=>b.out>=t,past:b=>b.out<t,unpaid:b=>balance(b)>0,all:()=>true}[filter];
+ L=L.filter(f).sort((a,b)=>filter==="past"?b.in.localeCompare(a.in):a.in.localeCompare(b.in));
+ const chips=["upcoming","unpaid","past","all"].map(k=>`<button class="tag" data-f="${k}" style="border:0;padding:8px 12px;font-size:13px;${filter===k?"background:var(--brand);color:var(--on)":"color:var(--ink)"}">${k[0].toUpperCase()+k.slice(1)}</button>`).join(" ");
+ const owed=S.bookings.reduce((s,b)=>s+Math.max(0,balance(b)),0);
+ return `<div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0">${chips}</div><div class="sub" style="margin-bottom:8px">Total owed by guests: <b>${money(owed)}</b></div>`+(L.length?L.map(card).join(""):'<div class="empty">No bookings here yet. Tap “New booking” to add one.</div>');
+}
+function renderCal(){
+ const days=Array.from({length:14},(_,i)=>addD(calStart,i)),t=today();
+ let h=`<div class="cal"><button data-cal="-7">‹ Week</button><b>${fmt(days[0])} – ${fmt(days[13])}</b><button data-cal="7">Week ›</button></div><div class="scroll"><table><tr><th class="rm"></th>`;
+ days.forEach(d=>h+=`<th class="${d===t?"t":""}">${P(d).getDate()}<br>${P(d).toLocaleDateString(undefined,{weekday:"narrow"})}</th>`);
+ h+="</tr>";
+ S.rooms.forEach(r=>{h+=`<tr><td class="rm">${esc(r.name)}</td>`;
+  days.forEach(d=>{const b=S.bookings.find(x=>x.room===r.id&&x.in<=d&&d<x.out);
+   h+=b?`<td class="b ${d===t?"t":""}" data-edit="${b.id}">${esc(b.guest.slice(0,5))}</td>`:`<td class="${d===t?"t":""}" data-new="${r.id}|${d}"></td>`});
+  h+="</tr>"});
+ return h+`</table></div><p class="sub">Tap an empty day to book it. Tap a booked day to edit.</p>`;
+}
+function renderRooms(){
+ return `<h2>Your rooms</h2>`+S.rooms.map(r=>`<button class="item" data-room="${r.id}"><div class="row"><b>${esc(r.name)}</b><span>${money(r.rate)} / night</span></div></button>`).join("")+`<button class="btn sec" data-room="new" style="margin-top:8px">+ Add room</button>
+ <h2>Backup</h2><p class="sub">Data is saved on this device. Copy a backup to keep it safe or move it to another phone.</p><button class="btn sec" id="bk">Copy backup</button><button class="btn sec" id="rs" style="margin-top:8px">Restore from backup</button>
+ <h2>Account</h2><button class="btn sec" id="so">Sign out</button>`;
+}
+function render(){
+ $("#date").textContent=new Date().toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"});
+ document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===view));
+ $("#fab").style.display=$("#pasteBtn").style.display=view==="rooms"?"none":"block";
+ $("#main").innerHTML={today:renderToday,list:renderList,cal:renderCal,rooms:renderRooms}[view]();
+}
+function open(html){$("#sheetBody").innerHTML=html;$("#sheet").classList.add("open")}
+function close(){$("#sheet").classList.remove("open")}
+
+function bookingForm(id,pre,note){
+ const b=S.bookings.find(x=>x.id===id)||Object.assign({id:"",guest:"",phone:"",room:S.rooms[0]&&S.rooms[0].id,in:today(),out:addD(today(),1),pax:1,rate:S.rooms[0]?S.rooms[0].rate:0,paid:0,notes:""},pre||{});
+ if(!S.rooms.length){open('<p>Add a room first, under the Rooms tab.</p><button class="btn sec" data-close>Close</button>');return}
+ open(`<h2 style="margin-top:0">${id?"Edit booking":"New booking"}</h2><div id="err">${note||""}</div>
+ <label>Guest name</label><input id="f_guest" value="${esc(b.guest)}" autocomplete="off">
+ <label>Phone</label><input id="f_phone" type="tel" value="${esc(b.phone)}">
+ <label>Room</label><select id="f_room">${S.rooms.map(r=>`<option value="${r.id}" ${r.id===b.room?"selected":""}>${esc(r.name)}</option>`).join("")}</select>
+ <div class="two"><div><label>Check-in</label><input id="f_in" type="date" value="${b.in}"></div><div><label>Check-out</label><input id="f_out" type="date" value="${b.out}"></div></div>
+ <div class="two"><div><label>Guests</label><input id="f_pax" type="number" min="1" value="${b.pax}"></div><div><label>Rate per night</label><input id="f_rate" type="number" min="0" value="${b.rate}"></div></div>
+ <label>Amount paid</label><input id="f_paid" type="number" min="0" value="${b.paid}">
+ <label>Notes</label><textarea id="f_notes" rows="2">${esc(b.notes)}</textarea>
+ <p class="sub" id="tot"></p>
+ <button class="btn" data-savebk="${id||""}">Save booking</button>
+ <button class="btn sec" data-close style="margin-top:8px">Cancel</button>
+ ${id?`<button class="btn del" data-delbk="${id}" style="margin-top:4px">Delete booking</button>`:""}`);
+ const upd=()=>{const n=nights($("#f_in").value,$("#f_out").value);$("#tot").textContent=n>0?`${n} night${n==1?"":"s"} · Total ${money(n*(+$("#f_rate").value||0))}`:""};
+ ["f_in","f_out","f_rate"].forEach(i=>$("#"+i).addEventListener("input",upd));
+ $("#f_room").addEventListener("change",()=>{const r=room($("#f_room").value);if(r&&!id)$("#f_rate").value=r.rate;upd()});
+ upd();
+}
+function saveBooking(id){
+ const g=i=>$("#f_"+i).value.trim();
+ const b={id:id||uid(),guest:g("guest"),phone:g("phone"),room:g("room"),in:g("in"),out:g("out"),pax:+g("pax")||1,rate:+g("rate")||0,paid:+g("paid")||0,notes:g("notes")};
+ const e=m=>{$("#err").innerHTML=`<p class="err">${m}</p>`;$("#sheetBody").scrollTop=0};
+ if(!b.guest)return e("Enter the guest’s name.");
+ if(!b.in||!b.out||nights(b.in,b.out)<1)return e("Check-out must be after check-in.");
+ const c=clash(b);
+ if(c)return e(`${esc(room(b.room).name)} is already booked by ${esc(c.guest)} from ${fmt(c.in)} to ${fmt(c.out)}. Choose other dates or another room.`);
+ const i=S.bookings.findIndex(x=>x.id===b.id);
+ if(i>=0)S.bookings[i]=b;else S.bookings.push(b);
+ save({b});close();render();
+}
+function roomForm(id){
+ const r=S.rooms.find(x=>x.id===id)||{id:"",name:"",rate:50};
+ open(`<h2 style="margin-top:0">${id?"Edit room":"Add room"}</h2><label>Room name</label><input id="r_name" value="${esc(r.name)}"><label>Default rate per night</label><input id="r_rate" type="number" min="0" value="${r.rate}">
+ <button class="btn" data-saverm="${id||""}">Save room</button><button class="btn sec" data-close style="margin-top:8px">Cancel</button>${id?`<button class="btn del" data-delrm="${id}" style="margin-top:4px">Delete room</button>`:""}`);
+}
+document.addEventListener("click",e=>{
+ const t=e.target.closest("button,td"); if(!t){if(e.target.id==="sheet")close();return}
+ const d=t.dataset;
+ if(d.v){view=d.v;render()}
+ else if(t.id==="fab")bookingForm(null,null);
+ else if(t.id==="pasteBtn")pasteForm();
+ else if(t.id==="pgo"){const x=$("#pt").value.trim();if(!x)return;const r=parseMsg(x);bookingForm(null,r.pre,r.note)}
+ else if(d.edit)bookingForm(d.edit);
+ else if(d.new){const[r,x]=d.new.split("|");const rm=room(r);bookingForm(null,{room:r,in:x,out:addD(x,1),rate:rm.rate})}
+ else if(d.f){filter=d.f;render()}
+ else if(d.cal){calStart=addD(calStart,+d.cal);render()}
+ else if(d.close!==undefined)close();
+ else if(d.savebk!==undefined)saveBooking(d.savebk);
+ else if(d.delbk){if(confirm("Delete this booking?")){S.bookings=S.bookings.filter(b=>b.id!==d.delbk);save({del:d.delbk});close();render()}}
+ else if(d.room)roomForm(d.room==="new"?null:d.room);
+ else if(d.saverm!==undefined){const n=$("#r_name").value.trim();if(!n)return;const r={id:d.saverm||uid(),name:n,rate:+$("#r_rate").value||0};const i=S.rooms.findIndex(x=>x.id===r.id);if(i>=0)S.rooms[i]=r;else S.rooms.push(r);save({rooms:1});close();render()}
+ else if(d.delrm){if(S.bookings.some(b=>b.room===d.delrm))alert("This room has bookings. Delete or move them first.");else if(confirm("Delete this room?")){S.rooms=S.rooms.filter(r=>r.id!==d.delrm);save({rooms:1});close();render()}}
+ else if(t.id==="bk"){const s=JSON.stringify(S);(navigator.clipboard?navigator.clipboard.writeText(s):Promise.reject()).then(()=>alert("Backup copied. Paste it into a note or message to yourself.")).catch(()=>open(`<p>Copy this backup:</p><textarea rows="8" readonly>${esc(s)}</textarea><button class="btn sec" data-close>Close</button>`))}
+ else if(t.id==="rs"){open(`<p>Paste your backup below. This replaces current data.</p><textarea id="rstxt" rows="8"></textarea><button class="btn" id="rsgo">Restore</button><button class="btn sec" data-close style="margin-top:8px">Cancel</button>`)}
+ else if(t.id==="lgo")doLogin();
+ else if(t.id==="cfgo")doCfg();
+ else if(t.id==="so"){if(DB)firebase.auth().signOut().then(()=>location.reload())}
+ else if(t.id==="rsgo"){try{const x=JSON.parse($("#rstxt").value);if(!Array.isArray(x.rooms)||!Array.isArray(x.bookings))throw 0;S=x;save({all:1});close();render()}catch(_){alert("That isn’t a valid backup.")}}
+});
+const MN="(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)";
+const mi=s=>["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"].indexOf(s.slice(0,3).toLowerCase());
+const fixY=(y,m,d)=>{const n=new Date();const yr=y?(y<100?2000+y:y):n.getFullYear();let dt=new Date(yr,m,d,12);if(!y&&dt<new Date(n.getTime()-30*864e5))dt=new Date(yr+1,m,d,12);return iso(dt)};
+function findDates(s){
+ const f=[],R=[
+  [/(\d{4})-(\d{1,2})-(\d{1,2})(?!\d)/g,m=>fixY(+m[1],m[2]-1,+m[3])],
+  [/(?<!\d)(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4}|\d{2})(?!\d)/g,m=>fixY(+m[3],m[2]-1,+m[1])],
+  [new RegExp("(?<!\\d)(\\d{1,2})(?:st|nd|rd|th)?[\\s,\\-]*"+MN+"(?![A-Za-z])\\.?(?:[\\s,\\-]*(\\d{4}))?","gi"),m=>fixY(+m[3]||0,mi(m[2]),+m[1])],
+  [new RegExp("\\b"+MN+"\\.?\\s+(\\d{1,2})(?:st|nd|rd|th)?(?!\\d)(?:,?\\s*(\\d{4}))?","gi"),m=>fixY(+m[3]||0,mi(m[1]),+m[2])]
+ ];
+ R.forEach(([re,fn])=>{let m;while((m=re.exec(s)))f.push({i:m.index,e:m.index+m[0].length,v:fn(m)})});
+ f.sort((a,b)=>a.i-b.i);let last=-1;
+ return f.filter(x=>{if(x.i<last)return false;last=x.e;return true}).map(x=>x.v);
+}
+function parseMsg(raw){
+ const t=raw.replace(/[*_~]/g,"").replace(/\r/g,""),miss=[];
+ const grab=re=>{const m=t.match(re);return m?m[1].trim():""};
+ let guest=grab(/(?:guest\s*name|customer\s*name|primary\s*guest|lead\s*guest|booked\s*by)\s*[:\-–]\s*([^\n|]+)/i)||grab(/\bguest\s*[:\-–]\s*([^\n|]+)/i)||grab(/(?<!hotel\s|property\s)\bname\s*[:\-–]\s*([^\n|]+)/i);
+ guest=guest.replace(/[.,;]+$/,"");
+ if(!guest)miss.push("guest name");
+ let phone=grab(/\b(?:mobile|phone|contact|mob|tel(?:ephone)?)\b[^\d+\n]{0,15}(\+?\d[\d\s-]{8,16}\d)/i)||grab(/(?<!\d)((?:\+?91[\s-]?)?[6-9]\d{9})(?!\d)/);
+ phone=phone.replace(/[\s-]/g,"");
+ if(!phone)miss.push("phone");
+ const after=re=>{const m=re.exec(t);if(!m)return "";const s=m.index+m[0].length;return findDates(t.slice(s,s+45))[0]||""};
+ const all=findDates(t);
+ let din=after(/check[\s-]*in|arriv\w*/i)||all[0]||"";
+ let dout=after(/check[\s-]*out|depart\w*/i);
+ if(!dout){const n=+(grab(/(\d+)\s*nights?/i)||0);dout=n&&din?addD(din,n):(all[1]&&all[1]!==din?all[1]:"")}
+ if(!din){miss.push("dates");din=today();dout=addD(din,1)}
+ else if(!dout||dout<=din){miss.push("check-out date");dout=addD(din,1)}
+ const ad=+grab(/(\d+)\s*adults?/i)||0,ch=+grab(/(\d+)\s*child(?:ren)?/i)||0;
+ const pax=ad+ch||+grab(/(\d+)\s*(?:guests?|pax|persons?|people)/i)||+grab(/(?:guests?|pax|persons?|occupancy)[^\d\n]{0,12}(\d+)/i)||1;
+ if(!(ad+ch)&&!/\d+\s*(?:guests?|pax|persons?|people)/i.test(t)&&!/(?:guests?|pax|persons?|occupancy)[^\d\n]{0,12}\d/i.test(t))miss.push("number of guests (set to 1)");
+ const bid=grab(/(?:booking|confirmation|reservation|order)\s*(?:id|ref(?:erence)?|no\.?|number)\s*[:#\-–]?\s*([A-Za-z0-9-]{4,})/i);
+ const lc=t.toLowerCase();
+ const nonac=/non[\s-]*a\/?c|non[\s-]*air/.test(lc),ac=!nonac&&/\ba\/?c\b|air[\s-]*condition/.test(lc);
+ const cls=/basic|economy|budget/.test(lc)?"basic":/standard|deluxe|superior|classic|\bstd\b/.test(lc)?"std":"";
+ if(!cls&&!nonac&&!ac)miss.push("room type");
+ let cand=S.rooms.filter(r=>{const n=r.name.toLowerCase(),non=/non/.test(n);
+  return (!cls||(cls==="basic"?/basic/.test(n):/std|standard/.test(n)))&&(!nonac||non)&&(!ac||(!non&&/ac/.test(n)))});
+ if(!cand.length)cand=S.rooms.slice();
+ const free=cand.find(r=>!clash({id:"",room:r.id,in:din,out:dout}));
+ const rm=free||cand[0];
+ if(!free&&rm)miss.push("no matching room is free for those dates");
+ const rc=+(grab(/no\.?\s*of\s*rooms?\s*[:\-–]?\s*(\d+)/i)||grab(/(\d+)\s*rooms?\b/i))||1;if(rc>1)miss.push("message has more than one room, so add each as its own booking");
+ const rp=grab(/rate\s*plan\s*[:\-–]\s*([^\n|]+)/i),pm=grab(/payment\s*mode\s*[:\-–]\s*([^\n|]+)/i),price=grab(/\bprice\s*[:\-–]\s*([\d.,]+)/i);
+ const pre={guest,phone,room:rm&&rm.id,in:din,out:dout,pax,rate:rm?rm.rate:0,paid:0,notes:["Ingo-MMT"+(bid?" #"+bid:""),rp?"Plan "+rp:"",price?"Price "+price:"",pm?"Payment "+pm:""].filter(Boolean).join(" | ")};
+ const note=`<p class="sub" style="background:var(--bg);padding:10px;border-radius:8px;margin:0 0 10px"><b>Read from your message.</b> ${miss.length?"Please check: "+esc(miss.join(", "))+". ":""}The room was picked automatically, so change it if needed.</p>`;
+ return {pre,note};
+}
+function pasteForm(){
+ open(`<h2 style="margin-top:0">Paste booking message</h2><p class="sub">Copy the Ingo-MMT WhatsApp message, paste it here, then check the details before saving.</p><textarea id="pt" rows="9" placeholder="Paste message here"></textarea><button class="btn" id="pgo">Create booking</button><button class="btn sec" data-close style="margin-top:8px">Cancel</button>`);
+}
+render();
+initDB();
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>
